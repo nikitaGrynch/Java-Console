@@ -1,13 +1,9 @@
 package step.learning;
 
-/**
- * Hello world!
- *
- */
-public class App 
-{
-    public static void main( String[] args )
-    {
-        System.out.println( "Hello World!" );
+import step.learning.basics.BasicsDemo;
+
+public class App {
+    public static void main(String[] args) {
+        new BasicsDemo().run();
     }
 }
