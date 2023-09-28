@@ -1,5 +1,7 @@
 package step.learning.oop;
 
+import com.google.gson.JsonObject;
+
 public class Gun extends Weapon implements Classified, Used{
     private int cartridge;
 
@@ -44,5 +46,29 @@ public class Gun extends Weapon implements Classified, Used{
     @Override
     public String getYears() {
         return getYearsInUse() + " years in use";
+    }
+
+    public static boolean isParseableFromJson(JsonObject jsonObject){
+        String[] requiredFields = {"name", "cartridge"};
+        for (String field : requiredFields){
+            if(!jsonObject.has(field)){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static Gun fromJson(JsonObject jsonObject) throws IllegalArgumentException {
+        String[] requiredFields = { "name", "cartridge", "yearsInUse" };
+        for(String field : requiredFields){
+            if(!jsonObject.has(field)) {
+                throw new IllegalArgumentException("Missing required field: " + field);
+            }
+        }
+        return new Gun(
+                jsonObject.get(requiredFields[0]).getAsString(),
+                jsonObject.get(requiredFields[1]).getAsInt(),
+                jsonObject.get(requiredFields[2]).getAsInt()
+                );
     }
 }
