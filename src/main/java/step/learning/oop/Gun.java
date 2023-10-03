@@ -2,9 +2,18 @@ package step.learning.oop;
 
 import com.google.gson.JsonObject;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
+
+@Serializable
 public class Gun extends Weapon implements Classified, Used{
+    @Required
     private int cartridge;
 
+    @Required
     private int yearsInUse;
 
     public Gun(String name, int cartridge, int yearsInUse) {
@@ -48,16 +57,17 @@ public class Gun extends Weapon implements Classified, Used{
         return getYearsInUse() + " years in use";
     }
 
+    @JsonParseCheck
     public static boolean isParseableFromJson(JsonObject jsonObject){
-        String[] requiredFields = {"name", "cartridge"};
-        for (String field : requiredFields){
-            if(!jsonObject.has(field)){
-                return false;
-            }
-        }
-        return true;
+        return
+                Stream.concat(
+                        Arrays.stream( Gun.class.getDeclaredFields() ),
+                        Arrays.stream(Gun.class.getSuperclass().getDeclaredFields() ) )
+                                .filter(field -> field.isAnnotationPresent(Required.class))
+                                .allMatch(field -> jsonObject.has(field.getName() ) );
     }
 
+    @JsonFactory
     public static Gun fromJson(JsonObject jsonObject) throws IllegalArgumentException {
         String[] requiredFields = { "name", "cartridge", "yearsInUse" };
         for(String field : requiredFields){

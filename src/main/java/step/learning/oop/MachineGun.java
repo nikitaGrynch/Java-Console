@@ -2,6 +2,7 @@ package step.learning.oop;
 
 import com.google.gson.JsonObject;
 
+@Serializable
 public class MachineGun extends Weapon implements Automatic, Classified{
     MachineGun(String name, double fireRate) {
         super.setName(name);
@@ -25,6 +26,7 @@ public class MachineGun extends Weapon implements Automatic, Classified{
         return "For military";
     }
 
+    @JsonParseCheck
     public static boolean isParseableFromJson(JsonObject jsonObject){
         String[] requiredFields = {"name", "fireRate"};
         for (String field : requiredFields){
@@ -35,6 +37,7 @@ public class MachineGun extends Weapon implements Automatic, Classified{
         return true;
     }
 
+    @JsonFactory
     public static MachineGun fromJson(JsonObject jsonObject) throws IllegalArgumentException {
         String[] requiredFields = { "name", "fireRate"};
         for(String field : requiredFields){

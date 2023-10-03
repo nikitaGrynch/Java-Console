@@ -2,18 +2,27 @@ package step.learning.oop;
 
 import com.google.gson.*;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
 public class Armory
 {
+    private List<Weapon> getSerializableWeapons(){
+        List<Weapon> result = new LinkedList<>();
+        for(Weapon weapon: weapons){
+            if(weapon.getClass().isAnnotationPresent(Serializable.class)){
+                result.add(weapon);
+            }
+        }
+        return result;
+    }
     public List<Weapon> weapons;
     public Armory(){
         weapons = new ArrayList<>();
@@ -38,15 +47,57 @@ public class Armory
                     .serializeNulls()
                     .setDateFormat("yyyy-MM-dd")
                     .create();
-            writer.write(gson.toJson(this.weapons));
+            writer.write(gson.toJson(this.getSerializableWeapons()));
         }
         catch (IOException ex){
             throw new RuntimeException(ex);
         }
     }
+
+    private List<Class<?>> findSerializableClasses(){
+        List<Class<?>> weaponClasses = new ArrayList<>();
+        String armoryName = Armory.class.getName();
+        String packageName = armoryName.substring(0, armoryName.lastIndexOf('.') + 1);
+        String packagePath = packageName.replace('.', '/');
+        URL resourceUrl = Armory.class.getClassLoader().getResource(packagePath);
+        if(resourceUrl == null){
+            throw new RuntimeException(String.format("Package '%s' got no resource", packagePath));
+        }
+        String resourcePath = resourceUrl.getPath();
+        try {resourcePath = URLDecoder.decode(resourcePath, "UTF-8"); }
+        catch (UnsupportedEncodingException ignored) {}
+        File resourceDir = new File(resourcePath);
+        File[] files = resourceDir.listFiles();
+        if(files == null){
+            throw new RuntimeException(String.format("Directory '%s' got no file list", resourceDir));
+        }
+        for(File file : files){
+            if(file.isDirectory()){
+                continue;
+            }
+            else if(file.isFile()) {
+                if (file.getName().endsWith(".class")) {
+                    String className = packageName +
+                            file.getName().substring(0, file.getName().lastIndexOf('.'));
+                    try {
+                        Class<?> classType = Class.forName(className);
+                        if (classType.isAnnotationPresent(Serializable.class)
+                                && Weapon.class.isAssignableFrom(classType)) {
+                            weaponClasses.add(classType);
+                        }
+                    } catch (ClassNotFoundException ignored) {
+                        System.err.printf("Class '%s' not found", className);
+                    }
+                }
+            }
+        }
+        return weaponClasses;
+    }
+
     public void load() throws RuntimeException{
         String resourceName = "armory.json";
-        Class<?>[] weaponClasses = { Shotgun.class, Gun.class, MachineGun.class, Rifle.class, SubmachineGun.class };
+        List<Class<?>> weaponClasses = this.findSerializableClasses();
+
         try(InputStreamReader reader =
                     new InputStreamReader(
                             Objects.requireNonNull(
@@ -60,41 +111,39 @@ public class Armory
                 JsonObject jsonObject = jsonElement.getAsJsonObject();
                 Weapon weapon = null;
                 for(Class<?> weaponClass : weaponClasses){
-                    Method isParseableFromJson = weaponClass
-                            .getDeclaredMethod("isParseableFromJson", JsonObject.class);
+                    Method isParseableFromJson = null; //  = weaponClass.getDeclaredMethod("isParseableFromJson", JsonObject.class);
+                    Method fromJson = null;  // = weaponClass.getDeclaredMethod("fromJson", JsonObject.class);
+                    for (Method method : weaponClass.getDeclaredMethods()){
+                        if(method.isAnnotationPresent(JsonParseCheck.class)){
+                            if(isParseableFromJson != null){
+                                throw new RuntimeException(String.format("Multiple methods with @%s annotation", JsonParseCheck.class.getName()));
+                            }
+                            isParseableFromJson = method;
+                        }
+                        if(method.isAnnotationPresent(JsonFactory.class)){
+                            if(fromJson != null){
+                                throw new RuntimeException(String.format("Multiple methods with @%s annotation", JsonFactory.class.getName()));
+                            }
+                            fromJson = method;
+                        }
+
+                    }
+                    if(isParseableFromJson == null || fromJson == null){
+                        continue;
+                    }
                     isParseableFromJson.setAccessible(true);
                     boolean res = (boolean) isParseableFromJson.invoke(null, jsonObject);
                     if(res) {
-                        Method fromJson = weaponClass.getDeclaredMethod("fromJson", JsonObject.class);
                         fromJson.setAccessible(true);
                         weapon = (Weapon) fromJson.invoke(null, jsonObject);
                         break;
                     }
                 }
-                /*
-                if(jsonObject.has("cartridge")){
-                    if(Gun.isParseableFromJson(jsonObject)) {
-                        weapon = Gun.fromJson(jsonObject);
-                    }
-                }
-
-                else if(jsonObject.has("fireRate")){
-                    if(MachineGun.isParseableFromJson(jsonObject)) {
-                        weapon = MachineGun.fromJson(jsonObject);
-                    }
-                }
-                else if(jsonObject.has("caliber")){
-                    if(Rifle.isParseableFromJson(jsonObject)) {
-                        weapon = Rifle.fromJson(jsonObject);
-                    }
-                }
-                else{
-                    System.out.println("Weapon type unrecognized - skipped");
-                }
-                */
-
                 if(weapon != null){
                     this.weapons.add(weapon);
+                }
+                else{
+                    System.err.println("Weapon type unrecognized - skipped");
                 }
             }
 
@@ -108,7 +157,7 @@ public class Armory
         catch ( IllegalArgumentException ex ){
             throw new RuntimeException("JSON parse error: " + ex.getMessage());
         }
-        catch(NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
+        catch( IllegalAccessException | InvocationTargetException ex) {
             throw new RuntimeException("Reflection error: " + ex.getMessage());
         }
     }

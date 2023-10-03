@@ -2,6 +2,7 @@ package step.learning.oop;
 
 import com.google.gson.JsonObject;
 
+@Serializable
 public class Rifle extends Weapon implements Rifled{
     Rifle(String name, float caliber) {
         super.setName(name);
@@ -22,6 +23,8 @@ public class Rifle extends Weapon implements Rifled{
         return String.format("Rifle: '%s' (caliber: %.2f)", super.getName(), getCaliber());
     }
 
+
+    @JsonParseCheck
     public static boolean isParseableFromJson(JsonObject jsonObject){
         String[] requiredFields = {"name", "caliber"};
         for (String field : requiredFields){
@@ -32,6 +35,7 @@ public class Rifle extends Weapon implements Rifled{
         return true;
     }
 
+    @JsonFactory
     public static Rifle fromJson(JsonObject jsonObject) throws IllegalArgumentException {
         String[] requiredFields = { "name", "caliber"};
         for(String field : requiredFields){

@@ -1,6 +1,7 @@
 package step.learning.oop;
 
 public abstract class Weapon {
+    @Required
     private String name;
 
     public String getName() {
