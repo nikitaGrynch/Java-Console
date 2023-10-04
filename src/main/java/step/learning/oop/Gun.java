@@ -2,7 +2,6 @@ package step.learning.oop;
 
 import com.google.gson.JsonObject;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,8 +56,17 @@ public class Gun extends Weapon implements Classified, Used{
         return getYearsInUse() + " years in use";
     }
 
+    private static final List<Object[]> requiredFields = new ArrayList<Object[]>();
+
     @JsonParseCheck
     public static boolean isParseableFromJson(JsonObject jsonObject){
+//        if(requiredFields.isEmpty()){
+//            requiredFields.add(Stream.concat(
+//                            Arrays.stream( Gun.class.getDeclaredFields() ),
+//                            Arrays.stream(Gun.class.getSuperclass().getDeclaredFields() ) )
+//                    .filter(field -> field.isAnnotationPresent(Required.class)).toArray());
+//        }
+//        return requiredFields.stream().allMatch(field -> jsonObject.has(field.getClass().getName()));
         return
                 Stream.concat(
                         Arrays.stream( Gun.class.getDeclaredFields() ),

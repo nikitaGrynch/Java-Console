@@ -37,6 +37,6 @@ public class IoCDemo2 {
 //        System.out.println(digestHashService2.hash("IoC Demo"));
 //        System.out.println(digestHashService.hashCode() + " " + digestHashService2.hashCode());
 
-        System.out.println(randomService.randomHex(6));
+        System.out.println(randomService.getClass().getName() + ": " + randomService.randomHex(6));
     }
 }

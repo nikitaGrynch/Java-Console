@@ -2,6 +2,11 @@ package step.learning.oop;
 
 import com.google.gson.JsonObject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
+
 public class SubmachineGun extends Weapon implements Automatic{
     public float getCaliber() {
         return caliber;
@@ -11,6 +16,7 @@ public class SubmachineGun extends Weapon implements Automatic{
         this.caliber = caliber;
     }
 
+    @Required
     private float caliber;
 
     public String getType() {
@@ -20,6 +26,8 @@ public class SubmachineGun extends Weapon implements Automatic{
     public void setType(String type) {
         this.type = type;
     }
+
+    @Required
     private String type;
 
     public SubmachineGun(String name, float caliber, String type){
@@ -28,14 +36,22 @@ public class SubmachineGun extends Weapon implements Automatic{
         this.setType(type);
     }
 
-    public static boolean isParseableFromJson(JsonObject jsonObject){
-        String[] requiredFields = {"name", "caliber", "type"};
-        for (String field : requiredFields){
-            if(!jsonObject.has(field)){
-                return false;
-            }
-        }
-        return true;
+    private static final List<Object[]> requiredFields = new ArrayList<Object[]>();
+
+    public static boolean isParseableFromJson(JsonObject jsonObject) {
+//        if(requiredFields.isEmpty()){
+//            requiredFields.add(Stream.concat(
+//                            Arrays.stream( SubmachineGun.class.getDeclaredFields() ),
+//                            Arrays.stream(SubmachineGun.class.getSuperclass().getDeclaredFields() ) )
+//                    .filter(field -> field.isAnnotationPresent(Required.class)).toArray());
+//        }
+//        return requiredFields.stream().allMatch(field -> jsonObject.has(field.getClass().getName()));
+        return
+                Stream.concat(
+                                Arrays.stream(SubmachineGun.class.getDeclaredFields()),
+                                Arrays.stream(SubmachineGun.class.getSuperclass().getDeclaredFields()))
+                        .filter(field -> field.isAnnotationPresent(Required.class))
+                        .allMatch(field -> jsonObject.has(field.getName()));
     }
 
     public static SubmachineGun fromJson(JsonObject jsonObject) throws IllegalArgumentException {
