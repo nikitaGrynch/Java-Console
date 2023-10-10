@@ -1,12 +1,14 @@
 package step.learning.oop;
 
 import com.google.gson.JsonObject;
+import com.sun.corba.se.spi.ior.ObjectKey;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+@Serializable
 public class Shotgun extends Weapon implements Classified{
 
     @Required
@@ -38,34 +40,32 @@ public class Shotgun extends Weapon implements Classified{
         this.setActionType(actionType);
     }
 
-    private static final List<Object[]> requiredFields = new ArrayList<Object[]>();
+    private static Object[] requiredFields;
 
+    @JsonParseCheck
     public static boolean isParseableFromJson(JsonObject jsonObject) {
-//        if(requiredFields.isEmpty()){
-//            requiredFields.add(Stream.concat(
-//                            Arrays.stream( Shotgun.class.getDeclaredFields() ),
-//                            Arrays.stream(Shotgun.class.getSuperclass().getDeclaredFields() ) )
-//                    .filter(field -> field.isAnnotationPresent(Required.class)).toArray());
-//        }
-//        return requiredFields.stream().allMatch(field -> jsonObject.has(field.getClass().getName()));
+        requiredFields = Stream.concat(
+                        Arrays.stream( Shotgun.class.getDeclaredFields() ),
+                        Arrays.stream(Shotgun.class.getSuperclass().getDeclaredFields() ) )
+                .filter(field -> field.isAnnotationPresent(Required.class))
+                .map(field -> field.getName())
+                .toArray();
         return
-                Stream.concat(
-                                Arrays.stream(Shotgun.class.getDeclaredFields()),
-                                Arrays.stream(Shotgun.class.getSuperclass().getDeclaredFields()))
-                        .filter(field -> field.isAnnotationPresent(Required.class))
-                        .allMatch(field -> jsonObject.has(field.getName()));
+                Arrays.stream(requiredFields)
+                        .allMatch(field -> jsonObject.has(field.toString() ) );
     }
+
+    @JsonFactory
     public static Shotgun fromJson(JsonObject jsonObject) throws IllegalArgumentException {
-        String[] requiredFields = { "name", "cartridge", "actionType" };
-        for(String field : requiredFields){
-            if(!jsonObject.has(field)) {
+        for(Object field : requiredFields){
+            if(!jsonObject.has(field.toString())) {
                 throw new IllegalArgumentException("Missing required field: " + field);
             }
         }
         return new Shotgun(
-                jsonObject.get(requiredFields[0]).getAsString(),
-                jsonObject.get(requiredFields[1]).getAsInt(),
-                jsonObject.get(requiredFields[2]).getAsString()
+                jsonObject.get(requiredFields[2].toString()).getAsString(),
+                jsonObject.get(requiredFields[0].toString()).getAsInt(),
+                jsonObject.get(requiredFields[1].toString()).getAsString()
         );
     }
     @Override

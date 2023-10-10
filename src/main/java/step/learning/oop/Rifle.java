@@ -2,6 +2,7 @@ package step.learning.oop;
 
 import com.google.gson.JsonObject;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,37 +30,30 @@ public class Rifle extends Weapon implements Rifled{
         return String.format("Rifle: '%s' (caliber: %.2f)", super.getName(), getCaliber());
     }
 
-    private static final List<Object[]> requiredFields = new ArrayList<Object[]>();
-
-
+    private static Object[] requiredFields;
     @JsonParseCheck
     public static boolean isParseableFromJson(JsonObject jsonObject) {
-//        if(requiredFields.isEmpty()){
-//            requiredFields.add(Stream.concat(
-//                            Arrays.stream( Rifle.class.getDeclaredFields() ),
-//                            Arrays.stream(Rifle.class.getSuperclass().getDeclaredFields() ) )
-//                    .filter(field -> field.isAnnotationPresent(Required.class)).toArray());
-//        }
-//        return requiredFields.stream().allMatch(field -> jsonObject.has(field.getClass().getName()));
+        requiredFields = Stream.concat(
+                        Arrays.stream( Rifle.class.getDeclaredFields() ),
+                        Arrays.stream(Rifle.class.getSuperclass().getDeclaredFields() ) )
+                .filter(field -> field.isAnnotationPresent(Required.class))
+                .map(field -> field.getName())
+                .toArray();
         return
-                Stream.concat(
-                                Arrays.stream(Rifle.class.getDeclaredFields()),
-                                Arrays.stream(Rifle.class.getSuperclass().getDeclaredFields()))
-                        .filter(field -> field.isAnnotationPresent(Required.class))
-                        .allMatch(field -> jsonObject.has(field.getName()));
+                Arrays.stream(requiredFields)
+                        .allMatch(field -> jsonObject.has(field.toString() ) );
     }
 
     @JsonFactory
     public static Rifle fromJson(JsonObject jsonObject) throws IllegalArgumentException {
-        String[] requiredFields = { "name", "caliber"};
-        for(String field : requiredFields){
-            if(!jsonObject.has(field)) {
+        for(Object field : requiredFields){
+            if(!jsonObject.has(field.toString())) {
                 throw new IllegalArgumentException("Missing required field: " + field);
             }
         }
         return new Rifle(
-                jsonObject.get(requiredFields[0]).getAsString(),
-                jsonObject.get(requiredFields[1]).getAsFloat()
+                jsonObject.get(requiredFields[1].toString()).getAsString(),
+                jsonObject.get(requiredFields[0].toString()).getAsFloat()
         );
     }
 

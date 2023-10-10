@@ -106,7 +106,7 @@ public class Armory
                                             .getResourceAsStream(resourceName)))) {
             JsonArray jsonArray = JsonParser.parseReader(reader).getAsJsonArray();
             for(JsonElement jsonElement : jsonArray){
-                System.out.println(jsonElement);
+                //System.out.println(jsonElement);
 
                 JsonObject jsonObject = jsonElement.getAsJsonObject();
                 Weapon weapon = null;

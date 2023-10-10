@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+@Serializable
 public class SubmachineGun extends Weapon implements Automatic{
     public float getCaliber() {
         return caliber;
@@ -36,35 +37,31 @@ public class SubmachineGun extends Weapon implements Automatic{
         this.setType(type);
     }
 
-    private static final List<Object[]> requiredFields = new ArrayList<Object[]>();
-
+    private static Object[] requiredFields;
+    @JsonParseCheck
     public static boolean isParseableFromJson(JsonObject jsonObject) {
-//        if(requiredFields.isEmpty()){
-//            requiredFields.add(Stream.concat(
-//                            Arrays.stream( SubmachineGun.class.getDeclaredFields() ),
-//                            Arrays.stream(SubmachineGun.class.getSuperclass().getDeclaredFields() ) )
-//                    .filter(field -> field.isAnnotationPresent(Required.class)).toArray());
-//        }
-//        return requiredFields.stream().allMatch(field -> jsonObject.has(field.getClass().getName()));
+        requiredFields = Stream.concat(
+                        Arrays.stream( SubmachineGun.class.getDeclaredFields() ),
+                        Arrays.stream(SubmachineGun.class.getSuperclass().getDeclaredFields() ) )
+                .filter(field -> field.isAnnotationPresent(Required.class))
+                .map(field -> field.getName())
+                .toArray();
         return
-                Stream.concat(
-                                Arrays.stream(SubmachineGun.class.getDeclaredFields()),
-                                Arrays.stream(SubmachineGun.class.getSuperclass().getDeclaredFields()))
-                        .filter(field -> field.isAnnotationPresent(Required.class))
-                        .allMatch(field -> jsonObject.has(field.getName()));
+                Arrays.stream(requiredFields)
+                        .allMatch(field -> jsonObject.has(field.toString() ) );
     }
 
+    @JsonFactory
     public static SubmachineGun fromJson(JsonObject jsonObject) throws IllegalArgumentException {
-        String[] requiredFields = { "name", "caliber", "type"};
-        for(String field : requiredFields){
-            if(!jsonObject.has(field)) {
+        for(Object field : requiredFields){
+            if(!jsonObject.has(field.toString())) {
                 throw new IllegalArgumentException("Missing required field: " + field);
             }
         }
         return new SubmachineGun(
-                jsonObject.get(requiredFields[0]).getAsString(),
-                jsonObject.get(requiredFields[1]).getAsFloat(),
-                jsonObject.get(requiredFields[2]).getAsString()
+                jsonObject.get(requiredFields[2].toString()).getAsString(),
+                jsonObject.get(requiredFields[0].toString()).getAsFloat(),
+                jsonObject.get(requiredFields[1].toString()).getAsString()
         );
     }
 

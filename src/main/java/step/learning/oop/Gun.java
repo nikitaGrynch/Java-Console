@@ -2,6 +2,7 @@ package step.learning.oop;
 
 import com.google.gson.JsonObject;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -56,37 +57,32 @@ public class Gun extends Weapon implements Classified, Used{
         return getYearsInUse() + " years in use";
     }
 
-    private static final List<Object[]> requiredFields = new ArrayList<Object[]>();
+    private static Object[] requiredFields;
 
     @JsonParseCheck
     public static boolean isParseableFromJson(JsonObject jsonObject){
-//        if(requiredFields.isEmpty()){
-//            requiredFields.add(Stream.concat(
-//                            Arrays.stream( Gun.class.getDeclaredFields() ),
-//                            Arrays.stream(Gun.class.getSuperclass().getDeclaredFields() ) )
-//                    .filter(field -> field.isAnnotationPresent(Required.class)).toArray());
-//        }
-//        return requiredFields.stream().allMatch(field -> jsonObject.has(field.getClass().getName()));
-        return
-                Stream.concat(
+        requiredFields = Stream.concat(
                         Arrays.stream( Gun.class.getDeclaredFields() ),
                         Arrays.stream(Gun.class.getSuperclass().getDeclaredFields() ) )
-                                .filter(field -> field.isAnnotationPresent(Required.class))
-                                .allMatch(field -> jsonObject.has(field.getName() ) );
+                .filter(field -> field.isAnnotationPresent(Required.class))
+                .map((field -> field.getName()))
+                .toArray();
+        return
+                Arrays.stream(requiredFields)
+                        .allMatch(field -> jsonObject.has(field.toString() ) );
     }
 
     @JsonFactory
     public static Gun fromJson(JsonObject jsonObject) throws IllegalArgumentException {
-        String[] requiredFields = { "name", "cartridge", "yearsInUse" };
-        for(String field : requiredFields){
-            if(!jsonObject.has(field)) {
+        for(Object field : requiredFields){
+            if(!jsonObject.has(field.toString())) {
                 throw new IllegalArgumentException("Missing required field: " + field);
             }
         }
         return new Gun(
-                jsonObject.get(requiredFields[0]).getAsString(),
-                jsonObject.get(requiredFields[1]).getAsInt(),
-                jsonObject.get(requiredFields[2]).getAsInt()
+                jsonObject.get(requiredFields[2].toString()).getAsString(),
+                jsonObject.get(requiredFields[0].toString()).getAsInt(),
+                jsonObject.get(requiredFields[1].toString()).getAsInt()
                 );
     }
 }
