@@ -2,6 +2,7 @@ package step.learning;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import step.learning.async.AnnualInflationAsyncTask;
 import step.learning.async.AsyncDemo;
 import step.learning.async.TaskDemo;
 import step.learning.basics.BasicsDemo;
@@ -18,12 +19,13 @@ public class App {
         // new DirDemo().run();
         // new FileIoDemo().run();
         // new OopDemo().run();
-        Injector injector = Guice.createInjector(new ConfigModule());
-        IocDemo iocDemo = injector.getInstance(IocDemo.class);
-        iocDemo.run();
+//        Injector injector = Guice.createInjector(new ConfigModule());
+//        IocDemo iocDemo = injector.getInstance(IocDemo.class);
+//        iocDemo.run();
         // Guice.createInjector(new ConfigModule()).getInstance(IoCDemo2.class).run();
         // Guice.createInjector(new ConfigModule()).getInstance(AsyncDemo.class).run();
         // Guice.createInjector(new ConfigModule()).getInstance(TaskDemo.class).run();
+        Guice.createInjector(new ConfigModule()).getInstance(AnnualInflationAsyncTask.class).run();
 
     }
 }

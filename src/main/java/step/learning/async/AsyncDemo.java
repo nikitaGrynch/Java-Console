@@ -13,7 +13,7 @@ public class AsyncDemo {
     private int activeThreadsCount;
     private final Object atcLocker = new Object();
 
-    private Random rnd = new Random();
+    private final Random rnd = new Random();
     private String pandigitalNumber;
     private final Object pnLocker = new Object();
 
